@@ -1,16 +1,16 @@
 import "reflect-metadata";
-import { AuthResolver } from "./modules/user/auth.resolver";
 import { ApolloServer } from "apollo-server-express";
 import cors from "cors";
 import express from "express";
 import morgan from "morgan";
 import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
+import { AuthResolver } from "./modules/user/auth.resolver";
 
 const PORT = process.env.PORT || 4000;
 
 createConnection()
-  .then(async (connection) => {
+  .then(async (_connection) => {
     // instantiate express app
     const app = express();
 
@@ -27,7 +27,7 @@ createConnection()
     await apolloServer.start();
     apolloServer.applyMiddleware({ app });
 
-    app.get("/", (req, res) => {
+    app.get("/", (_req, res) => {
       res.send("Hello, World!");
     });
 
