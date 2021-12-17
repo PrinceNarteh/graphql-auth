@@ -21,9 +21,11 @@ import { AuthPayload } from "./authPayload";
 @Resolver()
 export class AuthResolver {
   @UseMiddleware(isAuth)
-  @Query(() => String)
-  hello() {
-    return "Hello, World!";
+  @Query(() => User, { nullable: true })
+  async me(@Ctx() ctx: MyContext): Promise<User | null> {
+    const user = await User.findOne(ctx.req.session.userId);
+    if (!user) return null;
+    return user;
   }
 
   @Mutation(() => AuthPayload)
