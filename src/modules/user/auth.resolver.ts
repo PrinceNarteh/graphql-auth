@@ -13,8 +13,8 @@ import {
 import { RegisterInput } from "./auth.input";
 import { AuthPayload } from "./authPayload";
 import { MyContext } from "../../types/myContext";
-import { sendEmail } from "src/utils/sendEmail";
-import { redis } from "src/redis";
+import { sendEmail } from "../../utils/sendEmail";
+import { redis } from "../../redis";
 
 @Resolver()
 export class AuthResolver {
@@ -53,7 +53,7 @@ export class AuthResolver {
     };
   }
 
-  @Mutation(() => User)
+  @Mutation(() => User, { nullable: true })
   async login(
     @Arg("email") email: string,
     @Arg("password") password: string,
@@ -73,5 +73,16 @@ export class AuthResolver {
 
     ctx.req.session.userId = user.id;
     return user;
+  }
+
+  @Mutation(() => Boolean)
+  async confirmUser(@Arg("token") token: string): Promise<Boolean> {
+    const userId = await redis.get(token);
+    if (!userId) {
+      return false;
+    }
+    await User.update({ id: Number(userId) }, { confirmEmail: true });
+    await redis.del(token);
+    return true;
   }
 }
