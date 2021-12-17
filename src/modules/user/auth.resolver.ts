@@ -1,3 +1,4 @@
+import { createConfirmationUrl } from "./../../utils/createConfirmationUrl";
 import { isAuth } from "../../middleware/isAuth";
 import { User } from "./../../entity/User";
 import bcrypt from "bcryptjs";
@@ -12,6 +13,8 @@ import {
 import { RegisterInput } from "./auth.input";
 import { AuthPayload } from "./authPayload";
 import { MyContext } from "../../types/myContext";
+import { sendEmail } from "src/utils/sendEmail";
+import { redis } from "src/redis";
 
 @Resolver()
 export class AuthResolver {
@@ -43,6 +46,7 @@ export class AuthResolver {
       password: hashedPassword,
     });
     await user.save();
+    await sendEmail(user.email, await createConfirmationUrl(user.id));
     return {
       token: "This is the token",
       errorMessages: [],
@@ -62,6 +66,11 @@ export class AuthResolver {
     if (user && !(await bcrypt.compare(password, user.password))) {
       return null;
     }
+
+    if (!user.confirmEmail) {
+      return null;
+    }
+
     ctx.req.session.userId = user.id;
     return user;
   }
