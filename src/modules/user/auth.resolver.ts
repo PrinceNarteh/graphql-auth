@@ -1,8 +1,9 @@
 import { User } from "./../../entity/User";
 import bcrypt from "bcryptjs";
-import { Mutation, Query, Resolver, Arg } from "type-graphql";
+import { Mutation, Query, Resolver, Arg, Ctx } from "type-graphql";
 import { RegisterInput } from "./auth.input";
 import { AuthPayload } from "./authPayload";
+import { MyContext } from "../../types/myContext";
 
 @Resolver()
 export class AuthResolver {
@@ -37,5 +38,22 @@ export class AuthResolver {
       token: "This is the token",
       errorMessages: [],
     };
+  }
+
+  @Mutation(() => User)
+  async login(
+    @Arg("email") email: string,
+    @Arg("password") password: string,
+    @Ctx() ctx: MyContext
+  ): Promise<User | null> {
+    let user = await User.findOne({ email });
+    if (!user) {
+      return null;
+    }
+    if (user && !(await bcrypt.compare(password, user.password))) {
+      return null;
+    }
+    ctx.req.session.userId = user.id;
+    return user;
   }
 }
