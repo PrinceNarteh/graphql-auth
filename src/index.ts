@@ -54,9 +54,10 @@ createConnection()
           return false;
         },
       }),
-      context: ({ req }) => {
+      context: ({ req, res }) => {
         return {
           req,
+          res,
         };
       },
     });
