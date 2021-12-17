@@ -47,6 +47,12 @@ createConnection()
     const apolloServer = new ApolloServer({
       schema: await buildSchema({
         resolvers: [AuthResolver],
+        authChecker: ({ context: { req } }) => {
+          if (req.session.userId) {
+            return true;
+          }
+          return false;
+        },
       }),
       context: ({ req }) => {
         return {
