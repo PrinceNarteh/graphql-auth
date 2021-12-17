@@ -1,14 +1,22 @@
+import { isAuth } from "../../middleware/isAuth";
 import { User } from "./../../entity/User";
 import bcrypt from "bcryptjs";
-import { Mutation, Query, Resolver, Arg, Ctx, Authorized } from "type-graphql";
+import {
+  Mutation,
+  Query,
+  Resolver,
+  Arg,
+  Ctx,
+  UseMiddleware,
+} from "type-graphql";
 import { RegisterInput } from "./auth.input";
 import { AuthPayload } from "./authPayload";
 import { MyContext } from "../../types/myContext";
 
 @Resolver()
 export class AuthResolver {
+  @UseMiddleware(isAuth)
   @Query(() => String)
-  @Authorized()
   hello() {
     return "Hello, World!";
   }
