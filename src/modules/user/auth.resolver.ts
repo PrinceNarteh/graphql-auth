@@ -15,7 +15,7 @@ import { sendEmail } from "../../utils/sendEmail";
 import { forgotPasswordPrefix } from "./../../constants/redisPrefixes";
 import { User } from "./../../entity/User";
 import { createConfirmationUrl } from "./../../utils/createConfirmationUrl";
-import { RegisterInput } from "./auth.input";
+import { ChangePasswordInput, RegisterInput } from "./auth.input";
 import { AuthPayload } from "./authPayload";
 
 @Resolver()
@@ -101,5 +101,30 @@ export class AuthResolver {
       `http://localhost:3000/user/change-password/${token}`
     );
     return true;
+  }
+
+  @Mutation(() => User, { nullable: true })
+  async changePassword(
+    @Arg("data") { token, password }: ChangePasswordInput,
+    @Ctx() ctx: MyContext
+  ): Promise<User | null> {
+    // get userId for the token
+    const userId = await redis.get(forgotPasswordPrefix + token);
+    if (!userId) return null;
+
+    // find the user
+    const user = await User.findOne(userId);
+    if (!user) return null;
+    await redis.del(forgotPasswordPrefix + token);
+
+    // hash and save password to database
+    user.password = await bcrypt.hash(password, 12);
+    await user.save();
+
+    // log the user in
+    ctx.req.session.userId = user.id;
+
+    // return user
+    return user;
   }
 }
