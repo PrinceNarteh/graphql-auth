@@ -1,20 +1,22 @@
-import { createConfirmationUrl } from "./../../utils/createConfirmationUrl";
-import { isAuth } from "../../middleware/isAuth";
-import { User } from "./../../entity/User";
 import bcrypt from "bcryptjs";
 import {
+  Arg,
+  Ctx,
   Mutation,
   Query,
   Resolver,
-  Arg,
-  Ctx,
   UseMiddleware,
 } from "type-graphql";
-import { RegisterInput } from "./auth.input";
-import { AuthPayload } from "./authPayload";
+import { v4 as uuid } from "uuid";
+import { isAuth } from "../../middleware/isAuth";
+import { redis } from "../../redis";
 import { MyContext } from "../../types/myContext";
 import { sendEmail } from "../../utils/sendEmail";
-import { redis } from "../../redis";
+import { forgotPasswordPrefix } from "./../../constants/redisPrefixes";
+import { User } from "./../../entity/User";
+import { createConfirmationUrl } from "./../../utils/createConfirmationUrl";
+import { RegisterInput } from "./auth.input";
+import { AuthPayload } from "./authPayload";
 
 @Resolver()
 export class AuthResolver {
@@ -83,6 +85,21 @@ export class AuthResolver {
     }
     await User.update({ id: Number(userId) }, { confirmEmail: true });
     await redis.del(token);
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  async forgotPassword(@Arg("email") email: string): Promise<Boolean> {
+    const user = await User.findOne({ email });
+    if (!user) return true;
+
+    const token = uuid();
+    await redis.set(forgotPasswordPrefix + token, user.id, "ex", 60 * 60 * 24); // expires in a day
+
+    await sendEmail(
+      email,
+      `http://localhost:3000/user/change-password/${token}`
+    );
     return true;
   }
 }
