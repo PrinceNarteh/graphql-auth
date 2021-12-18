@@ -16,7 +16,6 @@ import { forgotPasswordPrefix } from "./../../constants/redisPrefixes";
 import { User } from "./../../entity/User";
 import { createConfirmationUrl } from "./../../utils/createConfirmationUrl";
 import { ChangePasswordInput, RegisterInput } from "./auth.input";
-import { AuthPayload } from "./authPayload";
 
 @Resolver()
 export class AuthResolver {
@@ -28,21 +27,12 @@ export class AuthResolver {
     return user;
   }
 
-  @Mutation(() => AuthPayload)
-  async register(
-    @Arg("data") registerInput: RegisterInput
-  ): Promise<AuthPayload> {
+  @Mutation(() => User)
+  async register(@Arg("data") registerInput: RegisterInput): Promise<User> {
     const { email, password } = registerInput;
     const emailExist = await User.findOne({ email });
     if (emailExist) {
-      return {
-        token: "",
-        errorMessages: [
-          {
-            message: "User with this email already exists.",
-          },
-        ],
-      };
+      throw new Error("User with this email already exists.");
     }
     const hashedPassword = await bcrypt.hash(password, 12);
     const user = User.create({
@@ -51,10 +41,7 @@ export class AuthResolver {
     });
     await user.save();
     await sendEmail(user.email, await createConfirmationUrl(user.id));
-    return {
-      token: "This is the token",
-      errorMessages: [],
-    };
+    return user;
   }
 
   @Mutation(() => User, { nullable: true })
