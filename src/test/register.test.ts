@@ -2,6 +2,7 @@ import { Connection } from "typeorm";
 import { gCall } from "./gCall";
 import { testConnection } from "./testConnection";
 import faker from "faker";
+import { User } from "../entity/User";
 
 // connection variable
 let conn: Connection;
@@ -49,5 +50,11 @@ describe("Register", () => {
         },
       },
     });
+
+    const dbUser = await User.findOne({ where: { email: user.email } });
+    expect(dbUser?.confirmEmail).toBeFalsy();
+    expect(dbUser?.firstName).toBe(user.firstName);
+    expect(dbUser?.lastName).toBe(user.lastName);
+    expect(dbUser?.email).toBe(user.email);
   });
 });
