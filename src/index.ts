@@ -1,14 +1,13 @@
 import "reflect-metadata";
+import { ApolloServer } from "apollo-server-express";
+import connectRedis from "connect-redis";
 import cors from "cors";
 import express from "express";
 import session from "express-session";
 import morgan from "morgan";
-import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
-import { ApolloServer } from "apollo-server-express";
-import { AuthResolver } from "./modules/user/auth.resolver";
-import connectRedis from "connect-redis";
 import { redis } from "./redis";
+import { createSchema } from "./utils/createSchema";
 
 const PORT = process.env.PORT || 4000;
 let RedisStore = connectRedis(session);
@@ -45,15 +44,7 @@ createConnection()
 
     // setup apollo server
     const apolloServer = new ApolloServer({
-      schema: await buildSchema({
-        resolvers: [AuthResolver],
-        authChecker: ({ context: { req } }) => {
-          if (req.session.userId) {
-            return true;
-          }
-          return false;
-        },
-      }),
+      schema: await createSchema(),
       context: ({ req, res }) => {
         return {
           req,

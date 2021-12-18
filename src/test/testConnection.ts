@@ -1,13 +1,13 @@
 import { createConnection } from "typeorm";
 
-export const testConnection = (drop:boolean =false) => {
+export const testConnection = (drop: boolean = false) => {
   return createConnection({
     type: "postgres",
     host: "localhost",
     port: 5432,
     username: "postgres",
     password: "admin",
-    database: "graphql_auth",
+    database: "graphql_auth_test",
     logging: false,
     dropSchema: drop,
     synchronize: drop,
@@ -19,5 +19,5 @@ export const testConnection = (drop:boolean =false) => {
       migrationsDir: "src/migration",
       subscribersDir: "src/subscriber",
     },
-  };)
+  });
 };
